@@ -1,11 +1,971 @@
 <!doctype html>
 <html lang="az">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>8 Mart Məktubu 🌸</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; color-scheme: dark; }
+    body {
+      min-height: 100vh;
+      background: #08040c;
+      font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    input, textarea, button, a { -webkit-tap-highlight-color: transparent; font-family: inherit; }
+    ::selection { background: rgba(224,107,164,0.35); color: #fff7fb; }
+    #root { min-height: 100vh; }
+
+    /* ── Live Wallpaper Canvas ── */
+    #wallpaper-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Mouse particles overlay ── */
+    #mouse-particles {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .mp {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      will-change: transform, opacity;
+      line-height: 1;
+    }
+
+    /* ── Floating petals on card ── */
+    .floating-petal {
+      animation: petalFloat 5.5s ease-in-out infinite;
+    }
+    @keyframes petalFloat {
+      0%,100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.7; }
+      33%      { transform: translateY(-14px) rotate(10deg) scale(1.05); opacity: 1; }
+      66%      { transform: translateY(-6px) rotate(-5deg) scale(0.97); opacity: 0.85; }
+    }
+
+    /* ── Heart ── */
+    .heart-scene {
+      position: relative; display: inline-flex;
+      align-items: center; justify-content: center;
+      width: min(16rem,68vw); aspect-ratio: 1;
+      border: 0; background: transparent; cursor: pointer;
+      transition: transform 0.45s ease;
+      margin-top: 2.5rem;
+    }
+    .heart-scene:hover { transform: translateY(-5px) scale(1.02); }
+    .heart-scene--opening { animation: heartMorphOut 0.85s cubic-bezier(0.4,0,0.2,1) forwards; }
+    .heart-ring {
+      position: absolute; inset: 9%; border-radius: 50%;
+      border-width: 1px; border-style: solid;
+      animation: pulseRing 3.2s ease-in-out infinite;
+    }
+    .heart-ring--two { inset: 1%; animation-delay: 1.4s; }
+    .heart-core {
+      position: relative; width: 56%; aspect-ratio: 1;
+      transform: rotate(-45deg); border-radius: 26%;
+      animation: floatHeart 4.6s ease-in-out infinite;
+    }
+    .heart-core::before,.heart-core::after {
+      content:""; position: absolute;
+      width: 100%; height: 100%;
+      border-radius: 50%; background: inherit;
+    }
+    .heart-core::before { top:-50%; left:0; }
+    .heart-core::after  { top:0; left:50%; }
+    .heart-core__content {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transform: rotate(45deg);
+    }
+    .heart-mark { font-size: clamp(2rem,5vw,3rem); line-height:1; color:rgba(255,255,255,0.95); text-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    @keyframes pulseRing {
+      0%,100% { opacity:0.22; transform:scale(0.93); }
+      50%      { opacity:0.55; transform:scale(1.05); }
+    }
+    @keyframes floatHeart {
+      0%,100% { transform: rotate(-45deg) translateY(0); }
+      50%      { transform: rotate(-45deg) translateY(-13px); }
+    }
+    @keyframes heartMorphOut {
+      0%   { opacity:1; transform:scale(1) rotate(0deg); filter:blur(0); }
+      35%  { opacity:1; transform:scale(1.09) rotate(3deg); }
+      100% { opacity:0; transform:scale(0.65) rotate(-8deg); filter:blur(12px); }
+    }
+
+    /* ── Letter appear ── */
+    .letter-appear { animation: letterAppear 0.7s cubic-bezier(0.2,0.8,0.2,1) both; }
+    @keyframes letterAppear {
+      0%   { opacity:0; transform:translateY(32px) scale(0.93) rotateX(-12deg); }
+      100% { opacity:1; transform:translateY(0) scale(1) rotateX(0deg); }
+    }
+
+    /* ── Envelope ── */
+    .closing-envelope {
+      position:relative; width:min(22rem,85vw); aspect-ratio:1.18;
+      animation: envelopeLift 1.9s ease forwards;
+    }
+    .closing-envelope__back,.closing-envelope__front,.closing-envelope__flap,
+    .closing-envelope__paper,.closing-envelope__seal { position:absolute; }
+    .closing-envelope__back { inset:18% 0 0; border-radius:1.8rem; box-shadow:0 30px 80px rgba(0,0,0,0.25); }
+    .closing-envelope__paper {
+      left:8%;right:8%;top:2%;bottom:30%;border-radius:1.4rem;
+      padding:1.2rem;overflow:hidden;
+      animation: paperSlideIn 0.4s ease, paperSlideOut 0.9s ease 0.5s forwards;
+    }
+    .closing-envelope__front { left:0;right:0;bottom:0;height:56%;border-radius:0 0 1.8rem 1.8rem; clip-path:polygon(0 0,50% 58%,100% 0,100% 100%,0 100%); }
+    .closing-envelope__flap { left:0;right:0;top:18%;height:48%;transform-origin:top;border-radius:1.8rem 1.8rem 0 0; clip-path:polygon(0 0,50% 90%,100% 0); animation: flapClose 0.85s cubic-bezier(0.4,0,0.2,1) 0.35s forwards; }
+    .closing-envelope__seal {
+      left:50%;top:57%;z-index:2;display:grid;place-items:center;
+      width:3.8rem;aspect-ratio:1;transform:translate(-50%,-50%) scale(0);
+      border-radius:999px;font-size:1.3rem;font-weight:900;
+      box-shadow:0 16px 40px rgba(0,0,0,0.3);
+      animation: sealPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.98s forwards;
+    }
+    @keyframes envelopeLift {
+      0%   { transform:translateY(30px) scale(0.92); opacity:0; }
+      20%  { transform:translateY(0) scale(1); opacity:1; }
+      80%  { transform:translateY(-6px) scale(1); opacity:1; }
+      100% { transform:translateY(-28px) scale(0.94); opacity:0; }
+    }
+    @keyframes paperSlideIn  { from { transform:translateY(15%); } to { transform:translateY(0); } }
+    @keyframes paperSlideOut { from { transform:translateY(0); } to { transform:translateY(24%); } }
+    @keyframes flapClose { 0% { transform:rotateX(175deg); } 100% { transform:rotateX(0deg); } }
+    @keyframes sealPop {
+      0%   { transform:translate(-50%,-50%) scale(0); }
+      75%  { transform:translate(-50%,-50%) scale(1.12); }
+      100% { transform:translate(-50%,-50%) scale(1); }
+    }
+
+    /* ── Utility ── */
+    .font-playfair { font-family: 'Playfair Display', serif; }
+    @media (max-width: 640px) { .heart-scene { width:min(14rem,75vw); } }
+  </style>
+</head>
+<body>
+  <!-- Live wallpaper canvas -->
+  <canvas id="wallpaper-canvas"></canvas>
+  <!-- Mouse particles -->
+  <div id="mouse-particles"></div>
+  <div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ══════════════════════════════════════════════════════
+//  LIVE WALLPAPER ENGINE
+// ══════════════════════════════════════════════════════
+const WallpaperEngine = (() => {
+  let canvas, ctx, W, H, raf;
+  let currentTheme = 'rose';
+  let targetTheme = 'rose';
+  let transitionProgress = 1;
+  let particles = [];
+  let time = 0;
+
+  const THEME_COLORS = {
+    rose:  { bg: '#0d0409', orb1: [210,65,128], orb2: [180,40,100], orb3: [240,100,150], particle: [255,160,200] },
+    blue:  { bg: '#020810', orb1: [40,100,220], orb2: [60,80,200],  orb3: [80,140,240], particle: [120,180,255] },
+    dark:  { bg: '#080608', orb1: [160,110,20], orb2: [140,90,10],  orb3: [200,150,40], particle: [220,180,80]  },
+    green: { bg: '#030a05', orb1: [40,140,80],  orb2: [30,120,60],  orb3: [60,180,100], particle: [100,220,140] },
+  };
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function lerpColor(c1,c2,t){ return c1.map((v,i)=>Math.round(lerp(v,c2[i],t))); }
+  function rgba(c,a){ return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+  // Floating symbol particles for wallpaper
+  const SYMBOLS = {
+    rose: ['🌸','🌺','💗','✿','❀','🌷','💕'],
+    blue: ['💙','❄️','✦','💫','🌊','⭐','🫧'],
+    dark: ['✦','⭐','🌟','💛','✨','🌙','💫'],
+    green:['🌿','🍃','🌱','❀','✿','💚','🌸'],
+  };
+
+  function initParticles(theme) {
+    particles = Array.from({length:18}, (_,i) => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vy: -(0.15 + Math.random() * 0.35),
+      vx: (Math.random()-0.5) * 0.2,
+      size: 0.9 + Math.random() * 1.4,
+      opacity: 0.08 + Math.random() * 0.18,
+      rotation: Math.random()*360,
+      rotSpeed: (Math.random()-0.5) * 0.4,
+      emoji: SYMBOLS[theme][i % SYMBOLS[theme].length],
+      phase: Math.random() * Math.PI * 2,
+    }));
+  }
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function drawOrb(x, y, r, color, alpha) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba(color, alpha));
+    g.addColorStop(0.5, rgba(color, alpha * 0.4));
+    g.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function renderFrame() {
+    time += 0.003;
+
+    // Smooth theme transition
+    if (transitionProgress < 1) {
+      transitionProgress = Math.min(1, transitionProgress + 0.018);
+    } else {
+      currentTheme = targetTheme;
+    }
+
+    const ct = THEME_COLORS[currentTheme];
+    const tt = THEME_COLORS[targetTheme];
+    const tp = transitionProgress;
+
+    // Interpolate bg hex (simplified — just use dark base)
+    ctx.clearRect(0, 0, W, H);
+
+    // Background fill
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, lerpHex(ct.bg, tt.bg, tp));
+    bgGrad.addColorStop(1, '#06030a');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Animated orbs
+    const orb1x = W * 0.15 + Math.sin(time * 0.7) * W * 0.08;
+    const orb1y = H * 0.15 + Math.cos(time * 0.5) * H * 0.08;
+    const orb2x = W * 0.82 + Math.cos(time * 0.6) * W * 0.07;
+    const orb2y = H * 0.55 + Math.sin(time * 0.8) * H * 0.1;
+    const orb3x = W * 0.5  + Math.sin(time * 0.4) * W * 0.12;
+    const orb3y = H * 0.85 + Math.cos(time * 0.9) * H * 0.06;
+
+    const c1 = lerpColor(ct.orb1, tt.orb1, tp);
+    const c2 = lerpColor(ct.orb2, tt.orb2, tp);
+    const c3 = lerpColor(ct.orb3, tt.orb3, tp);
+    const pc = lerpColor(ct.particle, tt.particle, tp);
+
+    drawOrb(orb1x, orb1y, Math.min(W,H) * 0.42, c1, 0.28);
+    drawOrb(orb2x, orb2y, Math.min(W,H) * 0.34, c2, 0.20);
+    drawOrb(orb3x, orb3y, Math.min(W,H) * 0.38, c3, 0.18);
+
+    // Central soft glow
+    const cx = W/2 + Math.sin(time*0.3)*W*0.05;
+    const cy = H/2 + Math.cos(time*0.4)*H*0.04;
+    drawOrb(cx, cy, Math.min(W,H)*0.55, c1, 0.06);
+
+    // Dot grid overlay
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = rgba(pc, 0.5);
+    const gs = 38;
+    for (let x=0; x<W+gs; x+=gs) {
+      for (let y=0; y<H+gs; y+=gs) {
+        const pulse = 0.5 + 0.5 * Math.sin(time * 1.5 + x * 0.04 + y * 0.03);
+        ctx.globalAlpha = 0.04 + pulse * 0.06;
+        ctx.beginPath();
+        ctx.arc(x, y, 1 + pulse * 0.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // Diagonal shimmer lines
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    ctx.strokeStyle = rgba(pc, 0.8);
+    ctx.lineWidth = 0.5;
+    const lineSpacing = 80;
+    const offset = (time * 15) % lineSpacing;
+    for (let i = -H; i < W + H; i += lineSpacing) {
+      ctx.beginPath();
+      ctx.moveTo(i + offset, 0);
+      ctx.lineTo(i + offset + H, H);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Floating emoji particles
+    ctx.save();
+    for (const p of particles) {
+      p.x += p.vx + Math.sin(time + p.phase) * 0.15;
+      p.y += p.vy;
+      p.rotation += p.rotSpeed;
+      if (p.y < -60) { p.y = H + 40; p.x = Math.random() * W; }
+      if (p.x < -40) p.x = W + 40;
+      if (p.x > W + 40) p.x = -40;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.globalAlpha = p.opacity * (0.7 + 0.3 * Math.sin(time * 1.2 + p.phase));
+      ctx.font = `${p.size}rem 'Segoe UI Emoji', 'Apple Color Emoji', serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.emoji, 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // Vignette
+    const vig = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.75);
+    vig.addColorStop(0.4, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.65)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0,0,W,H);
+
+    raf = requestAnimationFrame(renderFrame);
+  }
+
+  function lerpHex(h1, h2, t) {
+    // Simple approach: just fade through black
+    const r1 = parseInt(h1.slice(1,3),16), g1=parseInt(h1.slice(3,5),16), b1=parseInt(h1.slice(5,7),16);
+    const r2 = parseInt(h2.slice(1,3),16), g2=parseInt(h2.slice(3,5),16), b2=parseInt(h2.slice(5,7),16);
+    const r=Math.round(r1+(r2-r1)*t), g=Math.round(g1+(g2-g1)*t), b=Math.round(b1+(b2-b1)*t);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  return {
+    init(theme='rose') {
+      canvas = document.getElementById('wallpaper-canvas');
+      ctx = canvas.getContext('2d');
+      currentTheme = targetTheme = theme;
+      resize();
+      initParticles(theme);
+      window.addEventListener('resize', ()=>{ resize(); });
+      renderFrame();
+    },
+    setTheme(theme) {
+      if (theme === targetTheme) return;
+      currentTheme = targetTheme;
+      targetTheme = theme;
+      transitionProgress = 0;
+      // Update particle emojis
+      particles.forEach((p,i) => { p.emoji = SYMBOLS[theme][i % SYMBOLS[theme].length]; });
+    },
+    destroy() { if(raf) cancelAnimationFrame(raf); }
+  };
+})();
+
+// ══════════════════════════════════════════════════════
+//  MOUSE PARTICLE ENGINE
+// ══════════════════════════════════════════════════════
+const MouseEngine = (() => {
+  let container, particles = [], pid = 0, raf, running = false;
+  let currentSymbols = ['🌸','💗','✿','❀','♡','❤','✦'];
+  let currentColor = 'rgba(230,130,160,0.9)';
+  let currentGlow = 'rgba(210,65,128,0.6)';
+  let lastX = -999, lastY = -999;
+
+  const THEME_META = {
+    rose:  { symbols:['🌸','🌺','💗','✿','❀','🌷','♡','❤'], color:'rgba(230,130,160,0.9)', glow:'rgba(210,65,128,0.6)' },
+    blue:  { symbols:['💙','❄️','✦','💫','⭐','✿','♡','🫧'], color:'rgba(80,150,230,0.9)',  glow:'rgba(60,120,220,0.6)' },
+    dark:  { symbols:['✦','⭐','🌟','💛','✨','🌙','💫','♡'], color:'rgba(210,170,70,0.9)',  glow:'rgba(180,130,30,0.6)' },
+    green: { symbols:['🌿','🍃','🌱','❀','✿','💚','♡','🌸'], color:'rgba(60,170,110,0.9)',  glow:'rgba(50,140,90,0.6)' },
+  };
+
+  function spawn(x, y) {
+    const count = 3;
+    for (let i=0;i<count;i++) {
+      const el = document.createElement('span');
+      el.className = 'mp';
+      const sym = currentSymbols[Math.floor(Math.random()*currentSymbols.length)];
+      el.textContent = sym;
+      const size = 0.85 + Math.random() * 1.0;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1.5 + Math.random() * 3;
+      const vx = Math.cos(angle) * speed * (Math.random() < 0.5 ? 0.6 : 1);
+      const vy = -(1.5 + Math.random() * 3.5);
+      const life = 60 + Math.floor(Math.random() * 50);
+      el.style.cssText = `font-size:${size}rem;color:${currentColor};text-shadow:0 0 10px ${currentGlow};`;
+      container.appendChild(el);
+      particles.push({ el, x, y, vx, vy, life, maxLife: life, rot: Math.random()*360, rotS: (Math.random()-0.5)*5 });
+    }
+  }
+
+  function tick() {
+    for (let i = particles.length-1; i>=0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.09;
+      p.vx *= 0.97;
+      p.rot += p.rotS;
+      p.life--;
+      const prog = p.life / p.maxLife;
+      const opacity = prog < 0.2 ? prog/0.2 : prog;
+      const scale = 0.4 + prog * 0.6;
+      p.el.style.transform = `translate(${p.x}px,${p.y}px) translate(-50%,-50%) rotate(${p.rot}deg) scale(${scale})`;
+      p.el.style.opacity = opacity;
+      if (p.life <= 0) {
+        p.el.remove();
+        particles.splice(i,1);
+      }
+    }
+    raf = requestAnimationFrame(tick);
+  }
+
+  return {
+    init() {
+      container = document.getElementById('mouse-particles');
+      // Reset all positions to origin, we use transform for positioning
+      window.addEventListener('mousemove', e => {
+        const dx = e.clientX - lastX, dy = e.clientY - lastY;
+        if (dx*dx + dy*dy < 25) return;
+        lastX = e.clientX; lastY = e.clientY;
+        // Spawn at fixed 0,0 and use transform to position
+        const p_base = particles.length;
+        spawn(0, 0);
+        // Fix: actually position at cursor
+        for (let i = p_base; i < particles.length; i++) {
+          particles[i].x = e.clientX;
+          particles[i].y = e.clientY;
+        }
+      }, {passive:true});
+      if (!running) { running = true; tick(); }
+    },
+    setTheme(t) {
+      const m = THEME_META[t] || THEME_META.rose;
+      currentSymbols = m.symbols;
+      currentColor = m.color;
+      currentGlow = m.glow;
+    }
+  };
+})();
+
+// ══════════════════════════════════════════════════════
+//  REACT APP
+// ══════════════════════════════════════════════════════
+const THEMES = {
+  rose: {
+    id:"rose",label:"Qızılgül",emoji:"🌸",tagline:"romantik • zərif • sevgi dolu",
+    defaultRelation:"Sevgilim",
+    defaultMessage:"Canım, 8 Martın mübarək. Sənin səsin, gülüşün və qəlbin həyatımın ən zərif hissəsidir. Hər günümə işıq, hər anıma sevgi qatdığın üçün sənə minnətdaram. Sən olmasan bu dünya solğun olardı — sevgin hər yerdə çiçək kimi açır.",
+    paperBg:"linear-gradient(160deg,#fff0f6 0%,#fff8f2 50%,#fef0f5 100%)",
+    paperBorder:"rgba(230,150,180,0.45)",paperText:"#5a1e3e",paperSubtext:"#7c4060",
+    paperInputBg:"rgba(255,255,255,0.85)",paperInputBorder:"#e8b8cc",paperInputText:"#5a1e3e",
+    envelopeBack:"linear-gradient(180deg,#ffe4ef,#f5b8d0)",
+    envelopeFront:"linear-gradient(180deg,#f0b0c8,#d4708e)",
+    envelopeFlap:"linear-gradient(160deg,#ffd6e8,#e896b8)",
+    envelopeSeal:"linear-gradient(135deg,#9f315f,#d46b98,#ffb0c8)",sealGlyph:"♥",
+    heartCore:"radial-gradient(circle at 35% 35%,rgba(255,238,245,0.97),rgba(255,183,214,0.97) 42%,rgba(210,70,130,0.99) 80%)",
+    heartRingColor:"rgba(255,180,210,0.28)",heartGlow:"rgba(210,65,128,0.5)",
+    petals:["🌸","🌺","💗","✿","❀","🌷","💕","🌸"],petalColor:"rgba(230,130,160,0.7)",
+    readBg:"#fff6fb",readCardBg:"linear-gradient(160deg,#fffafd,#ffe8f5)",readAccent:"#e06090",readText:"#5a2443",
+  },
+  blue: {
+    id:"blue",label:"Göy Üfüq",emoji:"💙",tagline:"sakit • dərin • sonsuz",
+    defaultRelation:"Anam",
+    defaultMessage:"Əziz anam, 8 Martın mübarək. Sənin sevgin, qayğın və gücün mənim üçün hər zaman ən böyük dayaq olub. Sən göy üzü kimi geniş, dəniz kimi dərinsin. Həyatımda olduğun üçün sonsuz təşəkkür edirəm.",
+    paperBg:"linear-gradient(160deg,#f0f6ff 0%,#f5f0ff 50%,#edf6ff 100%)",
+    paperBorder:"rgba(120,160,230,0.45)",paperText:"#1a3060",paperSubtext:"#3a5090",
+    paperInputBg:"rgba(255,255,255,0.88)",paperInputBorder:"#a0c0e8",paperInputText:"#1a3060",
+    envelopeBack:"linear-gradient(180deg,#d8eaff,#a8c8f0)",
+    envelopeFront:"linear-gradient(180deg,#a0c0f0,#6090d0)",
+    envelopeFlap:"linear-gradient(160deg,#c8e0ff,#90b8e8)",
+    envelopeSeal:"linear-gradient(135deg,#2a5090,#5090d0,#90c8ff)",sealGlyph:"✦",
+    heartCore:"radial-gradient(circle at 35% 35%,rgba(230,245,255,0.97),rgba(160,200,250,0.97) 42%,rgba(60,120,220,0.99) 80%)",
+    heartRingColor:"rgba(100,160,240,0.28)",heartGlow:"rgba(60,120,220,0.5)",
+    petals:["💙","❄️","✦","💫","🌊","💠","⭐","🫧"],petalColor:"rgba(80,140,220,0.7)",
+    readBg:"#f0f6ff",readCardBg:"linear-gradient(160deg,#f8fbff,#e0eeff)",readAccent:"#4080d0",readText:"#1a3060",
+  },
+  dark: {
+    id:"dark",label:"Qara Qızıl",emoji:"🖤",tagline:"güclü • premium • əbədi",
+    defaultRelation:"Dəyər verdiyim insan",
+    defaultMessage:"8 Martın mübarək. Sənin varlığın bu dünyanı daha gözəl, daha mənalı edir. Gecənin dərinliyi kimi sən də hər şeyi özündə gizlədən bir gücə sahibsən. Dəyərin hər zaman hiss olunsun, sevgin daim səni əhatə etsin.",
+    paperBg:"linear-gradient(160deg,#1a1020 0%,#120c1a 50%,#1e1228 100%)",
+    paperBorder:"rgba(200,160,80,0.35)",paperText:"#f0d890",paperSubtext:"#c8a860",
+    paperInputBg:"rgba(255,255,255,0.06)",paperInputBorder:"rgba(200,160,80,0.4)",paperInputText:"#f0d890",
+    envelopeBack:"linear-gradient(180deg,#2a1e38,#1a1028)",
+    envelopeFront:"linear-gradient(180deg,#3a2848,#201430)",
+    envelopeFlap:"linear-gradient(160deg,#382248,#281838)",
+    envelopeSeal:"linear-gradient(135deg,#b8900a,#e8c050,#f0d890)",sealGlyph:"★",
+    heartCore:"radial-gradient(circle at 35% 35%,rgba(255,248,210,0.97),rgba(220,180,80,0.97) 42%,rgba(140,90,20,0.99) 80%)",
+    heartRingColor:"rgba(210,170,70,0.28)",heartGlow:"rgba(180,130,30,0.55)",
+    petals:["✦","⭐","🌟","💛","✨","🌙","💫","🖤"],petalColor:"rgba(200,160,60,0.7)",
+    readBg:"#130e1c",readCardBg:"linear-gradient(160deg,#1e1630,#140f22)",readAccent:"#d4a830",readText:"#f0d890",
+  },
+  green: {
+    id:"green",label:"Bahar Çiçəyi",emoji:"🌿",tagline:"təzə • həyat dolu • saf",
+    defaultRelation:"Bacım",
+    defaultMessage:"Bacım, 8 Martın mübarək. Sən bahar kimi gəlir, hər yeri canlandırırsan. Sənin gülüşün çiçək açdırır, sevgin isə meşəni yaşıl saxlayır. Həyatımda olduğun üçün hər günüm daha mənalıdır.",
+    paperBg:"linear-gradient(160deg,#f0faf2 0%,#f5fff0 50%,#edfaf5 100%)",
+    paperBorder:"rgba(100,180,120,0.45)",paperText:"#1a4030",paperSubtext:"#3a6050",
+    paperInputBg:"rgba(255,255,255,0.88)",paperInputBorder:"#90d0a8",paperInputText:"#1a4030",
+    envelopeBack:"linear-gradient(180deg,#c8f0d8,#98d8b0)",
+    envelopeFront:"linear-gradient(180deg,#90d0a8,#60a878)",
+    envelopeFlap:"linear-gradient(160deg,#b8e8c8,#80c898)",
+    envelopeSeal:"linear-gradient(135deg,#2a7050,#50a870,#90d8a0)",sealGlyph:"❀",
+    heartCore:"radial-gradient(circle at 35% 35%,rgba(220,255,235,0.97),rgba(140,220,170,0.97) 42%,rgba(50,140,90,0.99) 80%)",
+    heartRingColor:"rgba(80,180,120,0.28)",heartGlow:"rgba(50,140,90,0.5)",
+    petals:["🌿","🍃","🌱","❀","✿","🌺","💚","🌸"],petalColor:"rgba(60,160,100,0.7)",
+    readBg:"#f0faf2",readCardBg:"linear-gradient(160deg,#f8fff5,#e0f8e8)",readAccent:"#3a9060",readText:"#1a4030",
+  },
+};
+
+const LIMITS = {name:60,relationship:60,message:1200};
+const COUNTRY_CODES = [
+  {code:"994",flag:"🇦🇿",label:"AZ"},{code:"90",flag:"🇹🇷",label:"TR"},
+  {code:"7",flag:"🇷🇺",label:"RU"},{code:"380",flag:"🇺🇦",label:"UA"},
+  {code:"995",flag:"🇬🇪",label:"GE"},{code:"998",flag:"🇺🇿",label:"UZ"},
+  {code:"44",flag:"🇬🇧",label:"GB"},{code:"49",flag:"🇩🇪",label:"DE"},
+  {code:"1",flag:"🇺🇸",label:"US"},
+];
+const SUSPICIOUS_PATTERNS=[/https?:\/\//i,/bit\.ly|tinyurl|t\.me|telegram|discord\.gg/i,/şifrə|sifre|password|pin\b|kart\s*no/i,/banka|bank|hesab/i,/pul\s*köçür|pul\s*göndər/i,/linkə\s*tıkla|linkə\s*kliklə/i];
+
+function generateCaptcha(){const a=Math.floor(Math.random()*9)+1,b=Math.floor(Math.random()*9)+1;return{question:`${a} + ${b} = ?`,answer:String(a+b)};}
+function sanitizePhone(v){return v.replace(/[^0-9]/g,'').slice(0,15);}
+function encodePayload(p){try{const c={r:p.recipientName,rel:p.relationship,s:p.senderName,m:p.message,t:p.theme};return btoa(encodeURIComponent(JSON.stringify(c)));}catch{return null;}}
+function decodePayload(v){try{const raw=JSON.parse(decodeURIComponent(atob(v)));const p=raw.m!==undefined?{recipientName:raw.r,relationship:raw.rel,senderName:raw.s,message:raw.m,theme:raw.t}:raw;if(!['rose','blue','dark','green'].includes(p.theme))return null;return p;}catch{return null;}}
+function isSuspicious(p){const t=[p.message,p.recipientName,p.senderName,p.relationship].join(' ');return SUSPICIOUS_PATTERNS.some(r=>r.test(t));}
+
+// ── Floating Petals ──────────────────────────────────
+function FloatingPetals({theme}) {
+  const items=[
+    {style:{top:"8%",left:"3%"},delay:"0s",size:"1.4rem"},
+    {style:{top:"6%",right:"4%"},delay:"1.2s",size:"1.1rem"},
+    {style:{top:"28%",left:"1.5%"},delay:"0.6s",size:"0.95rem"},
+    {style:{top:"42%",right:"2%"},delay:"1.9s",size:"1.2rem"},
+    {style:{bottom:"22%",left:"2%"},delay:"0.9s",size:"1.05rem"},
+    {style:{bottom:"8%",right:"3%"},delay:"1.5s",size:"1.3rem"},
+    {style:{bottom:"16%",left:"7%"},delay:"0.3s",size:"0.85rem"},
+    {style:{top:"62%",right:"1.5%"},delay:"2.2s",size:"1.1rem"},
+  ];
+  return React.createElement(React.Fragment,null,
+    items.map((item,i)=>
+      React.createElement('span',{
+        key:i,className:"floating-petal",
+        style:{position:'absolute',pointerEvents:'none',userSelect:'none',...item.style,fontSize:item.size,animationDelay:item.delay,color:theme.petalColor}
+      },theme.petals[i%theme.petals.length])
+    )
+  );
+}
+
+// ── Theme Pills ──────────────────────────────────────
+function ThemePills({selected,onSelect,variant='dark'}) {
+  const theme=THEMES[selected],isDark=selected==='dark';
+  return React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:'8px'}},
+    Object.keys(THEMES).map(key=>{
+      const t=THEMES[key],active=selected===key;
+      return React.createElement('button',{key,type:'button',onClick:()=>onSelect(key),
+        style:{
+          borderRadius:'999px',border:'1px solid',padding:'8px 16px',fontSize:'12px',fontWeight:700,cursor:'pointer',transition:'all 0.3s',
+          ...(active?{background:theme.envelopeSeal,borderColor:'transparent',color:isDark?'#1a1020':'white',boxShadow:`0 8px 24px ${theme.heartGlow}`,transform:'scale(1.08)'}
+            :variant==='dark'?{background:'rgba(255,255,255,0.06)',borderColor:'rgba(255,255,255,0.15)',color:'rgba(255,255,255,0.65)'}
+            :{background:'transparent',borderColor:theme.paperBorder,color:theme.paperSubtext})
+        }
+      },`${t.emoji} ${t.label}`);
+    })
+  );
+}
+
+// ── Heart Button ──────────────────────────────────────
+function HeartButton({theme,stage,onClick}) {
+  return React.createElement('button',{
+    type:'button',onClick,
+    className:`heart-scene${stage==='opening'?' heart-scene--opening':''}`,
+    style:{display:'block',margin:'0 auto'}
+  },
+    React.createElement('span',{className:'heart-ring',style:{borderColor:theme.heartRingColor}}),
+    React.createElement('span',{className:'heart-ring heart-ring--two',style:{borderColor:theme.heartRingColor}}),
+    React.createElement('span',{className:'heart-core',style:{
+      background:`${theme.heartCore},linear-gradient(135deg,rgba(255,255,255,0.4),transparent 60%)`,
+      boxShadow:`0 28px 80px ${theme.heartGlow},inset 0 1px 0 rgba(255,255,255,0.45)`
+    }},
+      React.createElement('span',{className:'heart-core__content'},
+        React.createElement('span',{className:'heart-mark'},'♡'),
+        React.createElement('span',{style:{display:'block',marginTop:'8px',fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.44em',color:'rgba(255,255,255,0.9)'}},
+          stage==='opening'?'açılır...':'toxun'
+        )
+      )
+    )
+  );
+}
+
+// ── Closing Envelope ──────────────────────────────────
+function ClosingEnvelope({theme,excerpt}) {
+  const isDark=theme.id==='dark';
+  return React.createElement('div',{className:'closing-envelope'},
+    React.createElement('div',{className:'closing-envelope__back',style:{background:theme.envelopeBack}}),
+    React.createElement('div',{className:'closing-envelope__paper',style:{background:isDark?'linear-gradient(180deg,#22182e,#1a1028)':'linear-gradient(180deg,#fffdfa,#fff4f8)',color:isDark?'#f0d890':'#643251'}},
+      React.createElement('p',{style:{fontSize:'10px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.36em',opacity:.6}},'8 Mart məktubu'),
+      React.createElement('p',{style:{marginTop:'12px',fontSize:'12px',lineHeight:1.6,opacity:.8}},excerpt)
+    ),
+    React.createElement('div',{className:'closing-envelope__front',style:{background:theme.envelopeFront}}),
+    React.createElement('div',{className:'closing-envelope__flap',style:{background:theme.envelopeFlap}}),
+    React.createElement('div',{className:'closing-envelope__seal',style:{background:theme.envelopeSeal,color:isDark?'#1a1020':'white'}},theme.sealGlyph)
+  );
+}
+
+// ── Read Letter Screen ────────────────────────────────
+function ReadLetterScreen({payload,onCreateNew}) {
+  const [reported,setReported]=useState(false);
+  const theme=THEMES[payload.theme]||THEMES.rose;
+  const isDark=theme.id==='dark';
+
+  useEffect(()=>{
+    WallpaperEngine.setTheme(payload.theme);
+    MouseEngine.setTheme(payload.theme);
+  },[payload.theme]);
+
+  const s={
+    wrapper:{minHeight:'100vh',overflow:'hidden',position:'relative',zIndex:1,color:theme.readText},
+    main:{display:'flex',minHeight:'100vh',alignItems:'center',justifyContent:'center',padding:'40px 16px',position:'relative',zIndex:10},
+    card:{width:'100%',maxWidth:'640px'},
+    letterCard:{position:'relative',overflow:'hidden',borderRadius:'2.6rem',padding:'clamp(28px,5vw,40px)',boxShadow:'0 40px 120px rgba(0,0,0,0.18)',background:theme.readCardBg,border:`1.5px solid ${theme.paperBorder}`},
+  };
+
+  return React.createElement('div',{style:s.wrapper},
+    React.createElement('main',{style:s.main},
+      React.createElement('div',{style:s.card},
+        React.createElement('div',{style:{textAlign:'center',marginBottom:'24px'}},
+          React.createElement('span',{style:{fontSize:'3rem'}},(THEMES[payload.theme]||THEMES.rose).emoji),
+          React.createElement('p',{style:{marginTop:'12px',fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.45em',opacity:.55}},'sənin üçün xüsusi bir məktub')
+        ),
+        React.createElement('div',{style:s.letterCard},
+          React.createElement(FloatingPetals,{theme}),
+          React.createElement('div',{style:{position:'absolute',inset:'16px',borderRadius:'2rem',border:`1.5px dashed ${theme.paperBorder}`,opacity:.5,pointerEvents:'none'}}),
+          React.createElement('div',{style:{position:'relative',zIndex:10}},
+            React.createElement('p',{style:{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.4em',color:theme.readAccent}},`8 Mart Məktubu — ${theme.label} ${theme.emoji}`),
+            React.createElement('h1',{className:'font-playfair',style:{marginTop:'16px',fontSize:'clamp(26px,5vw,36px)',fontWeight:900,lineHeight:1.1,color:theme.paperText}},`Sevgili `,React.createElement('span',{style:{color:theme.readAccent}},payload.recipientName||'Dəyərli insan'),','),
+            React.createElement('p',{style:{marginTop:'8px',fontSize:'14px',opacity:.65,color:theme.paperSubtext}},`${payload.relationship} • ${theme.tagline}`),
+            React.createElement('div',{style:{marginTop:'24px',borderRadius:'1.8rem',padding:'24px',fontSize:'15px',lineHeight:1.8,background:isDark?'rgba(255,255,255,0.04)':'rgba(255,255,255,0.72)',border:`1px solid ${theme.paperBorder}`,color:theme.paperText,whiteSpace:'pre-line'}},payload.message||'Burada məktub mətni görünəcək.'),
+            React.createElement('div',{style:{marginTop:'24px',textAlign:'right'}},
+              React.createElement('p',{style:{fontSize:'14px',opacity:.55,color:theme.paperSubtext}},'Sevgi ilə,'),
+              React.createElement('p',{className:'font-playfair',style:{marginTop:'4px',fontSize:'1.5rem',fontWeight:900,fontStyle:'italic',color:theme.readAccent}},payload.senderName||'Səni sevən biri')
+            ),
+            React.createElement('div',{style:{marginTop:'32px',display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:'16px',borderTop:`1px solid ${theme.paperBorder}`,paddingTop:'24px'}},
+              React.createElement('button',{type:'button',onClick:onCreateNew,style:{borderRadius:'999px',padding:'10px 20px',fontSize:'14px',fontWeight:900,background:theme.envelopeSeal,color:isDark?'#1a1020':'white',border:'none',cursor:'pointer',boxShadow:`0 8px 24px ${theme.heartGlow}`,transition:'transform 0.2s'}},`Öz məktubunu yarat ${theme.emoji}`),
+              !reported?React.createElement('button',{type:'button',onClick:()=>setReported(true),style:{fontSize:'11px',color:'rgba(0,0,0,0.4)',background:'none',border:'none',cursor:'pointer'}},`Uyğunsuz məzmun / Şikayət et`):React.createElement('p',{style:{fontSize:'11px',color:'#4ade80'}},'✓ Şikayət qeydə alındı')
+            )
+          )
+        )
+      )
+    ),
+    React.createElement('div',{style:{position:'fixed',bottom:'16px',right:'16px',zIndex:50,borderRadius:'999px',padding:'8px 16px',fontSize:'10px',textTransform:'uppercase',letterSpacing:'0.36em',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',background:isDark?'rgba(30,20,40,0.8)':'rgba(255,255,255,0.75)',border:`1px solid ${theme.paperBorder}`,color:theme.readAccent}},'made by rawonzexe')
+  );
+}
+
+// ── Main App ──────────────────────────────────────────
+function App() {
+  const [mode,setMode]=useState('compose');
+  const [readPayload,setReadPayload]=useState(null);
+  const [suspicious,setSuspicious]=useState(false);
+  const [stage,setStage]=useState('heart');
+  const [selectedTheme,setSelectedTheme]=useState('rose');
+  const [recipientName,setRecipientName]=useState('');
+  const [relationship,setRelationship]=useState('');
+  const [senderName,setSenderName]=useState('');
+  const [phone,setPhone]=useState('');
+  const [message,setMessage]=useState(THEMES.rose.defaultMessage);
+  const [shareUrl,setShareUrl]=useState('');
+  const [copyState,setCopyState]=useState('idle');
+  const [phoneError,setPhoneError]=useState(false);
+  const [countryCode,setCountryCode]=useState('994');
+  const [showCountryPicker,setShowCountryPicker]=useState(false);
+  const [rateLimitHit,setRateLimitHit]=useState(false);
+  const [sendCount,setSendCount]=useState(0);
+  const [lastSendTime,setLastSendTime]=useState(0);
+  const [captcha,setCaptcha]=useState(generateCaptcha);
+  const [captchaInput,setCaptchaInput]=useState('');
+  const [captchaError,setCaptchaError]=useState(false);
+  const [showCaptcha,setShowCaptcha]=useState(false);
+  const openTimer=useRef(null),stageTimer=useRef(null);
+  const theme=THEMES[selectedTheme],isDark=selectedTheme==='dark';
+
+  // Init engines
+  useEffect(()=>{
+    WallpaperEngine.init('rose');
+    MouseEngine.init();
+    return ()=>WallpaperEngine.destroy();
+  },[]);
+
+  // URL decode
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const encoded=params.get('l')||params.get('letter');
+    if(!encoded)return;
+    const decoded=decodePayload(encoded);
+    if(!decoded)return;
+    if(isSuspicious(decoded)){setSuspicious(true);setMode('read');return;}
+    setReadPayload(decoded);setMode('read');
+  },[]);
+
+  // Theme change → wallpaper + mouse
+  useEffect(()=>{
+    WallpaperEngine.setTheme(selectedTheme);
+    MouseEngine.setTheme(selectedTheme);
+  },[selectedTheme]);
+
+  const normalizedPhone=useMemo(()=>(countryCode+phone.replace(/[^0-9]/g,'')),[phone,countryCode]);
+  const isPhoneValid=normalizedPhone.length>=(countryCode.length+6)&&normalizedPhone.length<=(countryCode.length+12);
+  const phoneOk=!phone||isPhoneValid;
+  const canSend=Boolean(message.trim())&&phoneOk;
+  const liveExcerpt=useMemo(()=>{const t=message.trim();if(!t)return'Məktubun mətni burada görünəcək.';return t.length>160?`${t.slice(0,160)}…`:t;},[message]);
+
+  const generateShareUrl=()=>{
+    const p={recipientName:recipientName.trim()||'Mənim ən dəyərli insanım',relationship:relationship.trim()||theme.defaultRelation,senderName:senderName.trim()||'Səni sevən biri',message:message.trim(),theme:selectedTheme};
+    const encoded=encodePayload(p);
+    if(!encoded)return window.location.origin+window.location.pathname;
+    const url=new URL(window.location.href);url.searchParams.set('l',encoded);return url.toString();
+  };
+
+  const applyTheme=(key)=>{setSelectedTheme(key);setMessage(THEMES[key].defaultMessage);setRelationship('');};
+  const openLetter=()=>{if(stage!=='heart')return;setStage('opening');openTimer.current=setTimeout(()=>setStage('letter'),820);};
+
+  const handleSend=()=>{
+    if(!canSend)return;
+    if(phone&&!isPhoneValid){setPhoneError(true);setTimeout(()=>setPhoneError(false),4000);return;}
+    setPhoneError(false);
+    const now=Date.now();
+    if(now-lastSendTime<60000&&sendCount>=5){setRateLimitHit(true);setTimeout(()=>setRateLimitHit(false),10000);return;}
+    if(sendCount%5===0){setCaptcha(generateCaptcha());setCaptchaInput('');setCaptchaError(false);setShowCaptcha(true);return;}
+    doSend();
+  };
+
+  const doSend=()=>{
+    setShowCaptcha(false);setSendCount(c=>c+1);setLastSendTime(Date.now());
+    const url=generateShareUrl();setShareUrl(url);setCopyState('idle');
+    setStage('closing');stageTimer.current=setTimeout(()=>setStage('result'),1900);
+  };
+
+  const handleCaptchaSubmit=()=>{
+    if(captchaInput.trim()!==captcha.answer){setCaptchaError(true);setCaptcha(generateCaptcha());setCaptchaInput('');return;}
+    doSend();
+  };
+
+  const handleCopy=async()=>{if(!shareUrl)return;try{await navigator.clipboard.writeText(shareUrl);setCopyState('copied');setTimeout(()=>setCopyState('idle'),2400);}catch{setCopyState('error');}};
+  const handleWhatsApp=()=>{if(!shareUrl||!isPhoneValid)return;window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(`8 Mart mübarək!\n\nSənin üçün xüsusi bir məktub var:\n${shareUrl}`)}`,'_blank');};
+  const handleStartOver=()=>{setMode('compose');setStage('heart');setSuspicious(false);setReadPayload(null);const url=new URL(window.location.href);url.searchParams.delete('letter');url.searchParams.delete('l');window.history.replaceState({},'',url.toString());};
+
+  const showLetter=stage==='letter'||stage==='closing'||stage==='result';
+
+  // Input style helper
+  const inp=(extra={})=>({width:'100%',borderRadius:'1.2rem',padding:'12px 16px',fontSize:'14px',outline:'none',transition:'border-color 0.2s',background:theme.paperInputBg,border:`1.5px solid ${theme.paperInputBorder}`,color:theme.paperInputText,...extra});
+
+  const captchaModal=showCaptcha&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.6)',backdropFilter:'blur(8px)',padding:'16px'}},
+    React.createElement('div',{style:{width:'100%',maxWidth:'360px',borderRadius:'2rem',border:'1px solid rgba(255,255,255,0.15)',background:'#0e0817',padding:'32px',boxShadow:'0 32px 80px rgba(0,0,0,0.5)',color:'white'}},
+      React.createElement('h3',{style:{fontSize:'18px',fontWeight:900,textAlign:'center'}},'Doğrulama'),
+      React.createElement('p',{style:{marginTop:'8px',fontSize:'14px',textAlign:'center',color:'rgba(255,255,255,0.6)'}},'Zəhmət olmasa aşağıdakı sualı cavablandır:'),
+      React.createElement('p',{style:{marginTop:'20px',textAlign:'center',fontSize:'24px',fontWeight:900,color:theme.readAccent}},captcha.question),
+      React.createElement('input',{value:captchaInput,onChange:e=>setCaptchaInput(e.target.value.replace(/[^0-9]/g,'')),onKeyDown:e=>e.key==='Enter'&&handleCaptchaSubmit(),placeholder:'Cavabı yaz',style:{marginTop:'16px',width:'100%',borderRadius:'1.2rem',border:`1px solid ${captchaError?'#f87171':'rgba(255,255,255,0.15)'}`,background:'rgba(255,255,255,0.05)',padding:'12px 16px',textAlign:'center',fontSize:'14px',color:'white',outline:'none'}}),
+      captchaError&&React.createElement('p',{style:{marginTop:'8px',textAlign:'center',fontSize:'12px',color:'#f87171'}},'Yanlış cavab. Yenidən cəhd et.'),
+      React.createElement('div',{style:{marginTop:'20px',display:'flex',gap:'12px'}},
+        React.createElement('button',{type:'button',onClick:()=>setShowCaptcha(false),style:{flex:1,borderRadius:'999px',border:'1px solid rgba(255,255,255,0.15)',padding:'10px',fontSize:'14px',color:'rgba(255,255,255,0.6)',background:'none',cursor:'pointer'}},'Ləğv et'),
+        React.createElement('button',{type:'button',onClick:handleCaptchaSubmit,style:{flex:1,borderRadius:'999px',border:'none',padding:'10px',fontSize:'14px',fontWeight:900,background:theme.envelopeSeal,color:isDark?'#1a1020':'white',cursor:'pointer'}},'Təsdiqlə')
+      )
+    )
+  );
+
+  if(mode==='read'&&suspicious) return React.createElement('div',{style:{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',position:'relative',zIndex:1}},
+    React.createElement('div',{style:{width:'100%',maxWidth:'360px',borderRadius:'2rem',border:'1px solid rgba(239,68,68,0.3)',background:'rgba(127,29,29,0.4)',padding:'32px',textAlign:'center',backdropFilter:'blur(12px)',color:'white'}},
+      React.createElement('div',{style:{margin:'0 auto 16px',width:'64px',height:'64px',borderRadius:'50%',background:'rgba(239,68,68,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'28px'}},'⚠️'),
+      React.createElement('h2',{style:{fontSize:'20px',fontWeight:900,color:'#fca5a5'}},'Şübhəli məktub'),
+      React.createElement('p',{style:{marginTop:'12px',fontSize:'14px',lineHeight:1.7,color:'rgba(255,255,255,0.6)'}},'Bu linklə açılan məktubda şübhəli məzmun aşkar olundu.'),
+      React.createElement('button',{onClick:handleStartOver,style:{marginTop:'24px',borderRadius:'999px',background:'rgba(255,255,255,0.1)',padding:'10px 24px',fontSize:'14px',fontWeight:600,color:'rgba(255,255,255,0.8)',border:'none',cursor:'pointer'}},'Ana səhifəyə qayıt')
+    )
+  );
+
+  if(mode==='read'&&readPayload) return React.createElement(ReadLetterScreen,{payload:readPayload,onCreateNew:handleStartOver});
+
+  return React.createElement('div',{style:{minHeight:'100vh',overflowX:'hidden',color:'white',position:'relative',zIndex:1}},
+    captchaModal,
+    React.createElement('main',{style:{position:'relative',zIndex:10,display:'flex',minHeight:'100vh',alignItems:'center',justifyContent:'center',padding:'40px 16px'}},
+      React.createElement('div',{style:{width:'100%',maxWidth:'780px'}},
+
+        // ── HEART STAGE ──
+        !showLetter&&React.createElement('div',{style:{position:'relative',overflow:'hidden',borderRadius:'2.8rem',border:'1px solid rgba(255,255,255,0.10)',background:'linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))',padding:'clamp(24px,5vw,48px)',textAlign:'center',boxShadow:'0 48px 160px rgba(0,0,0,0.65)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}},
+          React.createElement(FloatingPetals,{theme}),
+          React.createElement('div',{style:{position:'relative',zIndex:10,maxWidth:'480px',margin:'0 auto'}},
+            React.createElement('div',{style:{marginBottom:'32px',display:'flex',flexWrap:'wrap',justifyContent:'center',gap:'8px'}},
+              React.createElement(ThemePills,{selected:selectedTheme,onSelect:applyTheme,variant:'dark'})
+            ),
+            React.createElement('h1',{className:'font-playfair',style:{fontSize:'clamp(28px,5vw,48px)',fontWeight:900,lineHeight:1.05,color:'white'}},
+              'Qəlbindən keçənləri ',
+              React.createElement('span',{style:{color:theme.readAccent}},'məktuba çevir.')
+            ),
+            React.createElement('p',{style:{marginTop:'16px',fontSize:'16px',lineHeight:1.7,color:'rgba(255,255,255,0.6)'}},'Ürəyə toxun, məktubunu yaz, sevdiyinə göndər.')
+          ),
+          React.createElement(HeartButton,{theme,stage,onClick:openLetter}),
+          React.createElement('p',{style:{position:'relative',zIndex:10,margin:'32px auto 0',maxWidth:'400px',fontSize:'14px',lineHeight:1.7,color:'rgba(255,255,255,0.35)'}},'Tema seç → ürəyə toxun → məktubunu yaz → nömrəni daxil et → göndər 🌸'),
+          React.createElement('p',{style:{position:'relative',zIndex:10,margin:'16px auto 0',maxWidth:'400px',fontSize:'11px',lineHeight:1.6,color:'rgba(255,255,255,0.45)'}},'🥲 Unutma — sevdiklərinin sənin onları sevdiyini göstər.')
+        ),
+
+        // ── LETTER STAGE ──
+        showLetter&&React.createElement('div',{className:'letter-appear',style:{position:'relative',overflow:'hidden',borderRadius:'2.8rem',boxShadow:'0 48px 160px rgba(0,0,0,0.55)',background:theme.paperBg,border:`1.5px solid ${theme.paperBorder}`}},
+          React.createElement('div',{style:{position:'absolute',inset:0,overflow:'hidden',borderRadius:'2.8rem',pointerEvents:'none'}},
+            React.createElement(FloatingPetals,{theme}),
+            React.createElement('div',{style:{position:'absolute',inset:'20px',borderRadius:'2.2rem',border:`1.5px dashed ${theme.paperBorder}`,opacity:.4}}),
+            React.createElement('div',{style:{position:'absolute',inset:0,opacity:.2,backgroundImage:`linear-gradient(transparent calc(100% - 1px),${theme.paperBorder} 1px)`,backgroundSize:'100% 2.6rem'}})
+          ),
+
+          React.createElement('div',{style:{position:'relative',zIndex:10,padding:'clamp(24px,5vw,40px)'}},
+            // Header
+            React.createElement('div',{style:{marginBottom:'28px',display:'flex',flexWrap:'wrap',alignItems:'start',justifyContent:'space-between',gap:'16px'}},
+              React.createElement('div',null,
+                React.createElement('p',{style:{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.42em',opacity:.6,color:theme.paperSubtext}},'8 Mart Məktubu'),
+                React.createElement('h2',{className:'font-playfair',style:{marginTop:'8px',fontSize:'clamp(20px,4vw,28px)',fontWeight:900,color:theme.paperText}},`${theme.emoji} ${theme.label}`)
+              ),
+              React.createElement('div',{style:{display:'flex',gap:'8px'}},
+                Object.keys(THEMES).map(key=>React.createElement('button',{key,type:'button',onClick:()=>applyTheme(key),title:THEMES[key].label,
+                  style:{width:'36px',height:'36px',borderRadius:'50%',border:`1px solid`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'16px',cursor:'pointer',transition:'all 0.3s',
+                    ...(selectedTheme===key?{background:theme.envelopeSeal,borderColor:'transparent',boxShadow:`0 6px 16px ${theme.heartGlow}`,transform:'scale(1.15)'}:{background:'transparent',borderColor:theme.paperBorder})
+                  }
+                },THEMES[key].emoji))
+              )
+            ),
+
+            // Kimə + Yaxınlıq
+            React.createElement('div',{style:{display:'grid',gap:'16px',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))'}},
+              React.createElement('label',{style:{display:'block'}},
+                React.createElement('span',{style:{display:'block',fontSize:'14px',fontWeight:600,marginBottom:'6px',color:theme.paperSubtext}},'Kimə 💌'),
+                React.createElement('input',{value:recipientName,onChange:e=>setRecipientName(e.target.value.slice(0,LIMITS.name)),placeholder:'Məsələn: mənim mələyim',maxLength:LIMITS.name,style:inp()}),
+                React.createElement('p',{style:{textAlign:'right',fontSize:'10px',marginTop:'4px',color:theme.paperSubtext+'88'}},`${recipientName.length}/${LIMITS.name}`)
+              ),
+              React.createElement('label',{style:{display:'block'}},
+                React.createElement('span',{style:{display:'block',fontSize:'14px',fontWeight:600,marginBottom:'6px',color:theme.paperSubtext}},'Yaxınlıq 🤍'),
+                React.createElement('input',{value:relationship,onChange:e=>setRelationship(e.target.value.slice(0,LIMITS.relationship)),placeholder:theme.defaultRelation,maxLength:LIMITS.relationship,style:inp()}),
+                React.createElement('p',{style:{textAlign:'right',fontSize:'10px',marginTop:'4px',color:theme.paperSubtext+'88'}},`${relationship.length}/${LIMITS.relationship}`)
+              )
+            ),
+
+            // Message
+            React.createElement('label',{style:{display:'block',marginTop:'16px'}},
+              React.createElement('span',{style:{display:'block',fontSize:'14px',fontWeight:600,marginBottom:'6px',color:theme.paperSubtext}},'Məktubun mətni ✍️'),
+              React.createElement('textarea',{value:message,onChange:e=>setMessage(e.target.value.slice(0,LIMITS.message)),rows:9,maxLength:LIMITS.message,placeholder:'Qəlbindən keçən sözləri buraya yaz...',style:{...inp(),resize:'none',lineHeight:1.8,borderRadius:'1.6rem',padding:'16px',border:`1.5px solid ${message.length>LIMITS.message-100?'#f87171':theme.paperInputBorder}`}}),
+              React.createElement('p',{style:{textAlign:'right',fontSize:'10px',marginTop:'4px',color:message.length>LIMITS.message-100?'#f87171':theme.paperSubtext+'88'}},`${message.length}/${LIMITS.message}`)
+            ),
+
+            // Sender + Phone
+            React.createElement('div',{style:{display:'grid',gap:'16px',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',marginTop:'16px'}},
+              React.createElement('label',{style:{display:'block'}},
+                React.createElement('span',{style:{display:'block',fontSize:'14px',fontWeight:600,marginBottom:'6px',color:theme.paperSubtext}},'Göndərən adı ✒️'),
+                React.createElement('input',{value:senderName,onChange:e=>setSenderName(e.target.value.slice(0,LIMITS.name)),placeholder:'Adını yaz',maxLength:LIMITS.name,style:inp()})
+              ),
+              React.createElement('div',null,
+                React.createElement('span',{style:{display:'block',fontSize:'14px',fontWeight:600,marginBottom:'6px',color:theme.paperSubtext}},'Nömrə 📱'),
+                React.createElement('div',{style:{display:'flex',gap:'8px',position:'relative'}},
+                  React.createElement('div',{style:{position:'relative'}},
+                    React.createElement('button',{type:'button',onClick:()=>setShowCountryPicker(v=>!v),
+                      style:{display:'flex',alignItems:'center',gap:'6px',borderRadius:'1.2rem',padding:'12px',fontSize:'14px',fontWeight:600,cursor:'pointer',background:theme.paperInputBg,border:`1.5px solid ${theme.paperInputBorder}`,color:theme.paperInputText}},
+                      React.createElement('span',null,COUNTRY_CODES.find(c=>c.code===countryCode)?.flag),
+                      React.createElement('span',null,`+${countryCode}`)
+                    ),
+                    showCountryPicker&&React.createElement('div',{style:{position:'absolute',zIndex:20,top:'calc(100% + 8px)',left:0,width:'160px',borderRadius:'1rem',border:`1px solid ${theme.paperBorder}`,background:'rgba(255,255,255,0.95)',padding:'4px',boxShadow:'0 16px 40px rgba(0,0,0,0.2)'}},
+                      COUNTRY_CODES.map(c=>React.createElement('button',{key:c.code,type:'button',onClick:()=>{setCountryCode(c.code);setShowCountryPicker(false);},
+                        style:{display:'flex',width:'100%',alignItems:'center',justifyContent:'space-between',borderRadius:'8px',padding:'6px 12px',fontSize:'13px',color:'#111827',background:'none',border:'none',cursor:'pointer'}},
+                        React.createElement('span',null,`${c.flag} ${c.label}`),
+                        React.createElement('span',{style:{fontSize:'12px',color:'#6b7280'}},`+${c.code}`)
+                      ))
+                    )
+                  ),
+                  React.createElement('div',{style:{flex:1}},
+                    React.createElement('input',{value:phone,onChange:e=>setPhone(sanitizePhone(e.target.value)),placeholder:'XX XXX XX XX',
+                      style:inp({border:`1.5px solid ${!phone?theme.paperInputBorder:isPhoneValid?'#4ade80':'#f87171'}`})}),
+                    React.createElement('p',{style:{marginTop:'4px',fontSize:'10px',fontWeight:600,color:!phone?theme.paperSubtext+'88':isPhoneValid?'#4ade80':'#f87171'}},
+                      !phone?'Nömrəni daxil et':isPhoneValid?`✓ +${countryCode} ${phone}`:`✗ Yanlış format`)
+                  )
+                )
+              )
+            ),
+
+            // Info note
+            React.createElement('div',{style:{marginTop:'24px',borderRadius:'1rem',background:'rgba(255,255,255,0.4)',padding:'16px',fontSize:'11px',lineHeight:1.6,color:'#374151'}},
+              React.createElement('p',{style:{fontWeight:600,marginBottom:'4px'}},'Bu sayt haqqında'),
+              React.createElement('p',null,'Bu sayt 8 Mart üçün şəxsi, emosional məktublar yaratmaq üçündür. Məktubun məzmunu heç bir serverdə saxlanılmır — bütün məlumatlar yalnız sənin brauzerində və yaratdığın linkin içində olur.'),
+              React.createElement('p',{style:{marginTop:'8px'}},'Bu platforma heç bir bank, ödəniş xidməti və ya rəsmi qurumla əlaqəli deyil.')
+            ),
+
+            // Actions
+            React.createElement('div',{style:{marginTop:'32px',display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:'16px',borderTop:'1px solid rgba(255,255,255,0.2)',paddingTop:'24px'}},
+              React.createElement('div',{style:{flex:1,minWidth:'200px',fontSize:'12px',color:'rgba(255,255,255,0.5)'}},
+                React.createElement('p',null,'Məktubunu hazırladıqdan sonra aşağıdakı düymə ilə zarf bağlanacaq.'),
+                rateLimitHit&&React.createElement('p',{style:{color:'#f87171',marginTop:'8px'}},'Çox tez-tez cəhd edirsən. Bir az gözlə.')
+              ),
+              React.createElement('button',{type:'button',onClick:handleSend,disabled:!canSend,
+                style:{borderRadius:'999px',padding:'12px 24px',fontSize:'14px',fontWeight:900,border:'none',cursor:canSend?'pointer':'not-allowed',opacity:canSend?1:0.5,background:theme.envelopeSeal,color:isDark?'#1a1020':'white',boxShadow:`0 12px 32px ${theme.heartGlow}`,transition:'transform 0.2s'}},
+                'Məktubu hazırla'
+              )
+            ),
+
+            // Closing animation
+            stage==='closing'&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.6)',backdropFilter:'blur(8px)'}},
+              React.createElement(ClosingEnvelope,{theme,excerpt:liveExcerpt})
+            ),
+
+            // Result screen
+            stage==='result'&&React.createElement('div',{style:{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,0.75)',backdropFilter:'blur(8px)',padding:'16px',overflowY:'auto'}},
+              React.createElement('div',{style:{width:'100%',maxWidth:'560px',borderRadius:'2rem',background:'rgba(5,3,9,0.98)',padding:'clamp(24px,4vw,32px)',fontSize:'14px',color:'white',boxShadow:'0 40px 120px rgba(0,0,0,0.6)'}},
+                React.createElement('h3',{style:{fontSize:'18px',fontWeight:900}},'Məktubun hazırdır ✨'),
+                React.createElement('p',{style:{marginTop:'8px',fontSize:'12px',color:'rgba(255,255,255,0.65)'}},'Seç: məktubu link kimi paylaş və ya birbaşa WhatsApp ilə göndər.'),
+                React.createElement('div',{style:{marginTop:'16px',display:'grid',gap:'12px',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))'}},
+                  React.createElement('button',{type:'button',onClick:handleCopy,
+                    style:{display:'flex',flexDirection:'column',alignItems:'start',borderRadius:'1rem',border:'1px solid rgba(255,255,255,0.15)',background:'rgba(255,255,255,0.05)',padding:'16px',cursor:'pointer',textAlign:'left',transition:'background 0.2s'}},
+                    React.createElement('span',{style:{fontSize:'12px',fontWeight:600,color:'rgba(255,255,255,0.7)'}},'Link kimi paylaş'),
+                    React.createElement('span',{style:{marginTop:'4px',fontSize:'11px',color:'rgba(255,255,255,0.55)',wordBreak:'break-all',WebkitLineClamp:2,display:'-webkit-box',WebkitBoxOrient:'vertical',overflow:'hidden'}},shareUrl||'Link burada görünəcək'),
+                    React.createElement('span',{style:{marginTop:'8px',display:'inline-flex',alignItems:'center',gap:'4px',borderRadius:'999px',background:'rgba(255,255,255,0.1)',padding:'4px 12px',fontSize:'11px'}},
+                      copyState==='copied'?'Kopyalandı ✓':copyState==='error'?'Kopyalama alınmadı':'Linki kopyala')
+                  ),
+                  React.createElement('button',{type:'button',onClick:handleWhatsApp,disabled:!shareUrl||!isPhoneValid,
+                    style:{display:'flex',flexDirection:'column',alignItems:'start',borderRadius:'1rem',border:'1px solid rgba(74,222,128,0.4)',background:'rgba(74,222,128,0.12)',padding:'16px',cursor:shareUrl&&isPhoneValid?'pointer':'not-allowed',opacity:shareUrl&&isPhoneValid?1:0.5,textAlign:'left',transition:'background 0.2s'}},
+                    React.createElement('span',{style:{fontSize:'12px',fontWeight:600,color:'#86efac'}},'WhatsApp ilə göndər'),
+                    React.createElement('span',{style:{marginTop:'4px',fontSize:'11px',color:'rgba(134,239,172,0.8)'}},isPhoneValid?'Hazır link WhatsApp-a göndəriləcək.':'⚠️ Əvvəlcə düzgün nömrə daxil et.')
+                  )
+                ),
+
+                // Support box
+                React.createElement('div',{style:{marginTop:'20px',borderRadius:'1rem',border:'1px solid rgba(251,191,36,0.3)',background:'rgba(245,158,11,0.1)',padding:'16px',fontSize:'12px',color:'#fef3c7'}},
+                  React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}},
+                    React.createElement('div',null,
+                      React.createElement('p',{style:{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.2em',color:'rgba(252,211,77,0.9)'}},'DƏSTƏK ET'),
+                      React.createElement('p',{style:{marginTop:'4px',fontSize:'13px',fontWeight:600}},'Bu layihəni bəyəndinsə, mənə dəstək ol ☕'),
+                      React.createElement('p',{style:{marginTop:'4px',fontSize:'11px',color:'rgba(254,243,199,0.8)'}},'Hər dəstək daha gözəl layihələr üçün motivasiyadır.')
+                    ),
+                    React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:'8px'}},
+                      React.createElement('button',{type:'button',onClick:()=>window.open('https://buymeacoffee.com/rawonzexe','_blank'),
+                        style:{borderRadius:'999px',background:'#fbbf24',padding:'8px 16px',fontSize:'11px',fontWeight:700,color:'#1a1207',border:'none',cursor:'pointer'}},
+                        '☕ Buy me a coffee'),
+                      React.createElement('button',{type:'button',onClick:()=>window.open('https://cayvoy.com/cayvoy/rawonzexe','_blank'),
+                        style:{borderRadius:'999px',background:'linear-gradient(135deg,#c8a000,#e8c040)',padding:'8px 16px',fontSize:'11px',fontWeight:700,color:'#1a1000',border:'none',cursor:'pointer'}},
+                        '🍵 Çay voy')
+                    )
+                  )
+                ),
+
+                React.createElement('button',{type:'button',onClick:()=>{setStage('letter');setShareUrl('');setCopyState('idle');},
+                  style:{marginTop:'16px',fontSize:'11px',color:'rgba(255,255,255,0.5)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',textUnderlineOffset:'4px'}},
+                  'Məktubun üzərində yenə düzəliş etmək istəyirəm')
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+</script>
+</body>
 </html>
