@@ -1206,3 +1206,7 @@ export function App() {
 }
 
 export default App;
+
+
+//////DATABASE SUPA/////
+import { supabase } from "./supabaseClient";  
