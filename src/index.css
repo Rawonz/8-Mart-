@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #08040c;
+}
+
+* { box-sizing: border-box; }
+
+body, button, input, textarea { font-family: inherit; }
+body, input, textarea, button { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+input, textarea, button, a { -webkit-tap-highlight-color: transparent; }
+
+::selection { background: rgba(224,107,164,0.35); color: #fff7fb; }
+
+#root { min-height: 100vh; }
+
+/* ── Floating petals ───────────────────────────────── */
+.floating-petal {
+  animation: petalFloat 5.5s ease-in-out infinite;
+}
+
+@keyframes petalFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.7; }
+  33%       { transform: translateY(-14px) rotate(10deg) scale(1.05); opacity: 1; }
+  66%       { transform: translateY(-6px) rotate(-5deg) scale(0.97); opacity: 0.85; }
+}
+
+/* ── Heart ─────────────────────────────────────────── */
+.heart-scene {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(16rem, 68vw);
+  aspect-ratio: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.45s ease;
+  margin-top: 2.5rem;
+  margin-bottom: 0;
+}
+
+.heart-scene:hover { transform: translateY(-5px) scale(1.02); }
+
+.heart-scene--opening {
+  animation: heartMorphOut 0.85s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+.heart-ring {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  border-width: 1px;
+  border-style: solid;
+  animation: pulseRing 3.2s ease-in-out infinite;
+}
+.heart-ring--two {
+  inset: 1%;
+  animation-delay: 1.4s;
+}
+
+.heart-core {
+  position: relative;
+  width: 56%;
+  aspect-ratio: 1;
+  transform: rotate(-45deg);
+  border-radius: 26%;
+  animation: floatHeart 4.6s ease-in-out infinite;
+}
+.heart-core::before,
+.heart-core::after {
+  content: "";
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: inherit;
+}
+.heart-core::before { top: -50%; left: 0; }
+.heart-core::after  { top: 0; left: 50%; }
+
+.heart-core__content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(45deg);
+}
+
+.heart-mark {
+  font-size: clamp(2rem,5vw,3rem);
+  line-height: 1;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+@keyframes pulseRing {
+  0%, 100% { opacity: 0.22; transform: scale(0.93); }
+  50%       { opacity: 0.55; transform: scale(1.05); }
+}
+@keyframes floatHeart {
+  0%, 100% { transform: rotate(-45deg) translateY(0); }
+  50%       { transform: rotate(-45deg) translateY(-13px); }
+}
+@keyframes heartMorphOut {
+  0%   { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0); }
+  35%  { opacity: 1; transform: scale(1.09) rotate(3deg); }
+  100% { opacity: 0; transform: scale(0.65) rotate(-8deg); filter: blur(12px); }
+}
+
+/* ── Letter appear ─────────────────────────────────── */
+.letter-appear {
+  animation: letterAppear 0.7s cubic-bezier(0.2,0.8,0.2,1) both;
+}
+@keyframes letterAppear {
+  0%   { opacity: 0; transform: translateY(32px) scale(0.93) rotateX(-12deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
+}
+
+/* ── Envelope ──────────────────────────────────────── */
+.closing-envelope {
+  position: relative;
+  width: min(22rem, 85vw);
+  aspect-ratio: 1.18;
+  animation: envelopeLift 1.85s ease forwards;
+}
+
+.closing-envelope__back,
+.closing-envelope__front,
+.closing-envelope__flap,
+.closing-envelope__paper,
+.closing-envelope__seal {
+  position: absolute;
+}
+
+.closing-envelope__back {
+  inset: 18% 0 0;
+  border-radius: 1.8rem;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+}
+
+.closing-envelope__paper {
+  left: 8%; right: 8%;
+  top: 2%; bottom: 30%;
+  border-radius: 1.4rem;
+  padding: 1.2rem;
+  overflow: hidden;
+  animation: paperSlideIn 0.4s ease, paperSlideOut 0.9s ease 0.5s forwards;
+}
+
+.closing-envelope__front {
+  left: 0; right: 0;
+  bottom: 0; height: 56%;
+  border-radius: 0 0 1.8rem 1.8rem;
+  clip-path: polygon(0 0, 50% 58%, 100% 0, 100% 100%, 0 100%);
+}
+
+.closing-envelope__flap {
+  left: 0; right: 0;
+  top: 18%; height: 48%;
+  transform-origin: top;
+  border-radius: 1.8rem 1.8rem 0 0;
+  clip-path: polygon(0 0, 50% 90%, 100% 0);
+  animation: flapClose 0.85s cubic-bezier(0.4,0,0.2,1) 0.35s forwards;
+}
+
+.closing-envelope__seal {
+  left: 50%; top: 57%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 3.8rem;
+  aspect-ratio: 1;
+  transform: translate(-50%,-50%) scale(0);
+  border-radius: 999px;
+  font-size: 1.3rem;
+  font-weight: 900;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+  animation: sealPop 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.98s forwards;
+}
+
+/* ── Rose theme envelope: gentle float ─────────────── */
+.closing-envelope {
+  animation: envelopeLift 1.9s ease forwards;
+}
+
+@keyframes envelopeLift {
+  0%   { transform: translateY(30px) scale(0.92); opacity: 0; }
+  20%  { transform: translateY(0) scale(1); opacity: 1; }
+  80%  { transform: translateY(-6px) scale(1); opacity: 1; }
+  100% { transform: translateY(-28px) scale(0.94); opacity: 0; }
+}
+
+@keyframes paperSlideIn  { from { transform: translateY(15%); } to { transform: translateY(0); } }
+@keyframes paperSlideOut { from { transform: translateY(0); } to { transform: translateY(24%); } }
+
+@keyframes flapClose {
+  0%   { transform: rotateX(175deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+@keyframes sealPop {
+  0%   { transform: translate(-50%,-50%) scale(0); }
+  75%  { transform: translate(-50%,-50%) scale(1.12); }
+  100% { transform: translate(-50%,-50%) scale(1); }
+}
+
+/* ── Blue theme: wave sway ─────────────────────────── */
+/* ── Dark theme: golden shimmer ───────────────────── */
+/* ── Green theme: upward bloom ────────────────────── */
+/* (envelope animation is unified; themes differ by color only) */
+
+/* ── Mobile ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .heart-scene { width: min(14rem, 75vw); }
+}
