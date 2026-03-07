@@ -667,7 +667,7 @@ export function App() {
         .from('Databasem')
         .insert([
           { 
-            receiver: recipientName.trim() || "Dəyərli insan", 
+            reciever: recipientName.trim() || "Dəyərli insan", 
             relationship: relationship.trim() || theme.defaultRelation,
             sender: senderName.trim() || "Səni sevən biri",
             message: message.trim(),
