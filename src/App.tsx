@@ -655,12 +655,36 @@ export function App() {
     _doSend();
   };
 
-  const _doSend = () => {
+  const _doSend = async () => {
     setShowCaptcha(false);
     setSendCount(c => c + 1);
     setLastSendTime(Date.now());
     const url = generateShareUrl();
     setShareUrl(url);
+
+    try {
+      const { error } = await supabase
+        .from('Databasem')
+        .insert([
+          { 
+            receiver: recipientName.trim() || "Dəyərli insan", 
+            relationship: relationship.trim() || theme.defaultRelation,
+            sender: senderName.trim() || "Səni sevən biri",
+            message: message.trim(),
+            theme: selectedTheme
+          }
+        ]);
+  
+      if (error) {
+        console.error('Veritabanına kaydedilirken hata oluştu:', error.message);
+      } else {
+        console.log('Mektup başarıyla veritabanına yedeklendi.');
+      }
+    } catch (err) {
+      console.error('Beklenmedik hata:', err);
+    }
+    // ----------------------------------
+    
     setCopyState("idle");
     setSceneStage("closing");
     stageTimerRef.current = window.setTimeout(() => setSceneStage("result"), 1900);
