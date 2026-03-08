@@ -607,21 +607,35 @@ export function App() {
   // Detect read mode from URL
   // Detect read mode from URL
   // Detect read mode from URL
+  // Detect read mode from URL
   useEffect(() => {
-    // ── ESKİ FORMAT COMPAT (searchParams) ──────────────────
+    // ── ESKİ FORMAT (searchParams) ──────────────────
     const params = new URLSearchParams(window.location.search);
     const oldLetter = params.get('l');
+    
     if (oldLetter) {
-      const decoded = decodeLetterParam(oldLetter);
-      if (!decoded) return;
-      if (isSuspiciousPayload(decoded)) {
+      try {
+        const decoded = decodeLetterParam(oldLetter);
+        if (!decoded) {
+          setSuspiciousRead(true);
+          setMode("read");
+          return;
+        }
+        
+        if (isSuspiciousPayload(decoded)) {
+          setSuspiciousRead(true);
+          setMode("read");
+          return;
+        }
+        
+        setReadPayload(decoded);
+        setMode("read");
+      } catch (err) {
+        console.error('Eski format hata:', err);
         setSuspiciousRead(true);
         setMode("read");
-        return;
       }
-      setReadPayload(decoded);
-      setMode("read");
-      return; // ← Önemli: buradan çık
+      return; // ← ÖNEMLİ!
     }
 
     // ── YENİ FORMAT (hash-based) ──────────────────────────
@@ -636,7 +650,6 @@ export function App() {
     const encoded = parts[4];
     const signature = parts[5];
 
-    // ✅ Supabase'den kontrol et
     (async () => {
       try {
         const { data, error } = await supabase
@@ -1375,5 +1388,3 @@ export default App;
 
 //////DATABASE SUPA/////
 import { supabase } from "./supabaseClient";  
-
- 
