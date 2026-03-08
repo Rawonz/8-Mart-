@@ -606,7 +606,25 @@ export function App() {
 
   // Detect read mode from URL
   // Detect read mode from URL
+  // Detect read mode from URL
   useEffect(() => {
+    // ── ESKİ FORMAT COMPAT (searchParams) ──────────────────
+    const params = new URLSearchParams(window.location.search);
+    const oldLetter = params.get('l');
+    if (oldLetter) {
+      const decoded = decodeLetterParam(oldLetter);
+      if (!decoded) return;
+      if (isSuspiciousPayload(decoded)) {
+        setSuspiciousRead(true);
+        setMode("read");
+        return;
+      }
+      setReadPayload(decoded);
+      setMode("read");
+      return; // ← Önemli: buradan çık
+    }
+
+    // ── YENİ FORMAT (hash-based) ──────────────────────────
     const hash = window.location.hash.slice(1);
     if (!hash.startsWith('/letter/')) return;
 
@@ -629,24 +647,20 @@ export function App() {
           .single();
 
         if (error || !data) {
-          // Kayıt bulunamadı = FAKE URL
           setSuspiciousRead(true);
           setMode("read");
           return;
         }
 
-        // Signature doğrula
         const signatureData = `${keyId}:${nonceData}:${encoded}`;
         const isValid = await verifySignature(signatureData, signature);
         
         if (!isValid || data.signature !== signature) {
-          // Signature eşleşmiyor = MANIPÜLE EDİLMİŞ
           setSuspiciousRead(true);
           setMode("read");
           return;
         }
 
-        // Payload decode et
         const decoded = decodeLetterParam(encoded);
         if (!decoded) return;
 
@@ -1361,5 +1375,3 @@ export default App;
 
 //////DATABASE SUPA/////
 import { supabase } from "./supabaseClient";  
-
- 
