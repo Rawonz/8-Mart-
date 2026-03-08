@@ -605,42 +605,65 @@ export function App() {
   }, []);
 
   // Detect read mode from URL
+  // Detect read mode from URL
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (!hash.startsWith('/letter/')) return;
-  
+
     const parts = hash.split('/');
-    if (!parts[2] || !parts[3] || !parts[4]) return;
-  
+    if (!parts[2] || !parts[3] || !parts[4] || !parts[5]) return;
+
     const keyId = parts[2];
     const nonceData = parts[3];
     const encoded = parts[4];
     const signature = parts[5];
 
-    if (!signature) {
-      setSuspiciousRead(true);
-      setMode("read");
-      return;
-    }
+    // ✅ Supabase'den kontrol et
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('Databasem')
+          .select('signature, message, theme')
+          .eq('key_id', keyId)
+          .eq('nonce', nonceData)
+          .single();
 
-    const signatureData = `${keyId}:${nonceData}:${encoded}`;
-    verifySignature(signatureData, signature).then(isValid => {
-      if (!isValid) {
+        if (error || !data) {
+          // Kayıt bulunamadı = FAKE URL
+          setSuspiciousRead(true);
+          setMode("read");
+          return;
+        }
+
+        // Signature doğrula
+        const signatureData = `${keyId}:${nonceData}:${encoded}`;
+        const isValid = await verifySignature(signatureData, signature);
+        
+        if (!isValid || data.signature !== signature) {
+          // Signature eşleşmiyor = MANIPÜLE EDİLMİŞ
+          setSuspiciousRead(true);
+          setMode("read");
+          return;
+        }
+
+        // Payload decode et
+        const decoded = decodeLetterParam(encoded);
+        if (!decoded) return;
+
+        if (isSuspiciousPayload(decoded)) {
+          setSuspiciousRead(true);
+          setMode("read");
+          return;
+        }
+
+        setReadPayload(decoded);
+        setMode("read");
+      } catch (err) {
+        console.error('URL doğrulama hatası:', err);
         setSuspiciousRead(true);
         setMode("read");
-        return;
       }
-
-      const decoded = decodeLetterParam(encoded);
-      if (!decoded) return;
-      if (isSuspiciousPayload(decoded)) {
-        setSuspiciousRead(true);
-        setMode("read");
-        return;
-      }
-      setReadPayload(decoded);
-      setMode("read");
-    });
+    })();
   }, []);
 
   const normalizedPhone = useMemo(() => { const digits = phone.replace(/[^0-9]/g, ''); return countryCode + digits; }, [phone, countryCode]);
@@ -739,32 +762,55 @@ export function App() {
     setShowCaptcha(false);
     setSendCount(c => c + 1);
     setLastSendTime(Date.now());
-    const url = await generateShareUrl();
-    setShareUrl(url);
+    
+    const keyId = rastgeleSayi(1000000000, 9999999999).toString();
+    const nonceData = generateNonce();
 
+    const payload: LetterPayload = {
+      recipientName: recipientName.trim() || "Mənim ən dəyərli insanım",
+      relationship: relationship.trim() || theme.defaultRelation,
+      senderName: senderName.trim() || "Səni sevən biri",
+      message: message.trim(),
+      theme: selectedTheme,
+    };
+
+    const encoded = encodeLetterParam(payload);
+    if (!encoded) return;
+    
+    const signatureData = `${keyId}:${nonceData}:${encoded}`;
+    const signature = await generateSignature(signatureData);
+
+    // ✅ Supabase'e kaydet
     try {
       const { error } = await supabase
         .from('Databasem')
         .insert([
           { 
+            key_id: keyId,
+            nonce: nonceData,
             receiver: recipientName.trim() || "Dəyərli insan", 
             relationship: relationship.trim() || theme.defaultRelation,
             sender: senderName.trim() || "Səni sevən biri",
             message: message.trim(),
-            theme: selectedTheme
+            theme: selectedTheme,
+            signature: signature,
+            created_at: new Date().toISOString()
           }
         ]);
-  
+
       if (error) {
-        console.error('Veritabanına kaydedilirken hata oluştu:', error.message);
-      } else {
-        console.log('Mektup başarıyla veritabanına yedeklendi.');
+        console.error('Veritabanına kaydedilirken hata:', error.message);
+        return;
       }
     } catch (err) {
       console.error('Beklenmedik hata:', err);
+      return;
     }
-    // ----------------------------------
-    
+
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}#/letter/${keyId}/${nonceData}/${encoded}/${signature}`;
+    setShareUrl(shareUrl);
+
     setCopyState("idle");
     setSceneStage("closing");
     stageTimerRef.current = window.setTimeout(() => setSceneStage("result"), 1900);
@@ -1315,5 +1361,3 @@ export default App;
 
 //////DATABASE SUPA/////
 import { supabase } from "./supabaseClient";  
-
- 
