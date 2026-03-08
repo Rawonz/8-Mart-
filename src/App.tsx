@@ -1375,3 +1375,5 @@ export default App;
 
 //////DATABASE SUPA/////
 import { supabase } from "./supabaseClient";  
+
+ 
