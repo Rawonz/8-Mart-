@@ -5,6 +5,7 @@ type SceneStage = "heart" | "opening" | "letter" | "closing" | "result";
 type ThemeKey = "rose" | "blue" | "dark" | "green";
 
 
+
 interface ThemeConfig {
   id: ThemeKey;
   label: string;
