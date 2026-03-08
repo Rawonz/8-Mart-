@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+
 type SceneStage = "heart" | "opening" | "letter" | "closing" | "result";
 type ThemeKey = "rose" | "blue" | "dark" | "green";
+
 
 interface ThemeConfig {
   id: ThemeKey;
@@ -180,13 +182,23 @@ type LetterPayload = {
   senderName: string;
   message: string;
   theme: ThemeKey;
+  keyId?: number;
+  nonceData?: string;
 };
 
-type CompactPayload = { r: string; rel: string; s: string; m: string; t: ThemeKey };
+type CompactPayload = { k?:number; n?: string; r: string; rel: string; s: string; m: string; t: ThemeKey };
 
 const encodeLetterParam = (payload: LetterPayload): string | null => {
   try {
-    const c: CompactPayload = { r: payload.recipientName, rel: payload.relationship, s: payload.senderName, m: payload.message, t: payload.theme };
+    const c: CompactPayload = {
+      ...(payload.keyId !== undefined && { k: payload.keyId }),
+      ...(payload.nonceData !== undefined && { n: payload.nonceData }),
+      r: payload.recipientName,
+      rel: payload.relationship,
+      s: payload.senderName,
+      m: payload.message,
+      t: payload.theme
+    };
     return window.btoa(encodeURIComponent(JSON.stringify(c)));
   }
   catch { return null; }
@@ -226,7 +238,7 @@ const SUSPICIOUS_PATTERNS = [
 ];
 
 const isSuspiciousPayload = (payload: LetterPayload): boolean => {
-  const text = [payload.message, payload.recipientName, payload.senderName, payload.relationship].join(" ");
+  const text = [payload.keyId, payload.nonceData, payload.message, payload.recipientName, payload.senderName, payload.relationship].join(" ");
   return SUSPICIOUS_PATTERNS.some(re => re.test(text));
 };
 
@@ -558,6 +570,35 @@ export function App() {
   const theme = THEMES[selectedTheme];
   const isDark = selectedTheme === "dark";
 
+    // HMAC signature oluştur
+  async function generateSignature(data: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(data);
+    const secret = 'your-secret-key';
+    const keyBuffer = encoder.encode(secret);
+    
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyBuffer,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signature = await crypto.subtle.sign('HMAC', key, dataBuffer);
+    
+    // Hex string'e çevir
+    return Array.from(new Uint8Array(signature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  // Signature doğrula
+  async function verifySignature(data: string, signature: string): Promise<boolean> {
+    const generated = await generateSignature(data);
+    return generated === signature;
+  }
+
   useEffect(() => () => {
     if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
     if (stageTimerRef.current) window.clearTimeout(stageTimerRef.current);
@@ -565,18 +606,41 @@ export function App() {
 
   // Detect read mode from URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const encoded = params.get("l") || params.get("letter");
-    if (!encoded) return;
-    const decoded = decodeLetterParam(encoded);
-    if (!decoded) return;
-    if (isSuspiciousPayload(decoded)) {
+    const hash = window.location.hash.slice(1);
+    if (!hash.startsWith('/letter/')) return;
+  
+    const parts = hash.split('/');
+    if (!parts[2] || !parts[3] || !parts[4]) return;
+  
+    const keyId = parts[2];
+    const nonceData = parts[3];
+    const encoded = parts[4];
+    const signature = parts[5];
+
+    if (!signature) {
       setSuspiciousRead(true);
       setMode("read");
       return;
     }
-    setReadPayload(decoded);
-    setMode("read");
+
+    const signatureData = `${keyId}:${nonceData}:${encoded}`;
+    verifySignature(signatureData, signature).then(isValid => {
+      if (!isValid) {
+        setSuspiciousRead(true);
+        setMode("read");
+        return;
+      }
+
+      const decoded = decodeLetterParam(encoded);
+      if (!decoded) return;
+      if (isSuspiciousPayload(decoded)) {
+        setSuspiciousRead(true);
+        setMode("read");
+        return;
+      }
+      setReadPayload(decoded);
+      setMode("read");
+    });
   }, []);
 
   const normalizedPhone = useMemo(() => { const digits = phone.replace(/[^0-9]/g, ''); return countryCode + digits; }, [phone, countryCode]);
@@ -596,8 +660,20 @@ export function App() {
     if (!t) return "Məktubun mətni burada görünəcək.";
     return t.length > 160 ? `${t.slice(0, 160)}…` : t;
   }, [message]);
+  
+  function rastgeleSayi(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function generateNonce() {
+    const arr = new Uint8Array(12);
+    window.crypto.getRandomValues(arr);
+    return Array.from(arr, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
 
-  const generateShareUrl = (): string => {
+  const generateShareUrl = async (): Promise<string> => {
+    const keyId = rastgeleSayi(1000000000, 9999999999);
+    const nonceData = generateNonce();
+
     const payload: LetterPayload = {
       recipientName: recipientName.trim() || "Mənim ən dəyərli insanım",
       relationship: relationship.trim() || theme.defaultRelation,
@@ -605,11 +681,15 @@ export function App() {
       message: message.trim(),
       theme: selectedTheme,
     };
+
     const encoded = encodeLetterParam(payload);
     if (!encoded) return window.location.origin + window.location.pathname;
-    const url = new URL(window.location.href);
-    url.searchParams.set("l", encoded);
-    return url.toString();
+    
+    const signatureData = `${keyId}:${nonceData}:${encoded}`;
+    const signature = await generateSignature(signatureData);
+    
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}#/letter/${keyId}/${nonceData}/${encoded}/${signature}`;
   };
 
   const getWhatsappHref = (url: string): string => {
@@ -659,7 +739,7 @@ export function App() {
     setShowCaptcha(false);
     setSendCount(c => c + 1);
     setLastSendTime(Date.now());
-    const url = generateShareUrl();
+    const url = await generateShareUrl();
     setShareUrl(url);
 
     try {
@@ -721,6 +801,7 @@ export function App() {
     setSceneStage("heart");
     setSuspiciousRead(false);
     setReadPayload(null);
+    window.location.hash = '';
     const url = new URL(window.location.href);
     url.searchParams.delete("letter");
     url.searchParams.delete("l");
