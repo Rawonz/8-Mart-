@@ -730,6 +730,8 @@ export function App() {
       senderName: senderName.trim() || "Səni sevən biri",
       message: message.trim(),
       theme: selectedTheme,
+      keyId: parseInt(keyId),
+      nonceData: nonceData
     };
 
     const encoded = encodeLetterParam(payload);
