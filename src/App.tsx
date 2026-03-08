@@ -725,13 +725,13 @@ export function App() {
     const nonceData = generateNonce();
 
     const payload: LetterPayload = {
+      keyId: parseInt(keyId),
+      nonceData: nonceData,
       recipientName: recipientName.trim() || "Mənim ən dəyərli insanım",
       relationship: relationship.trim() || theme.defaultRelation,
       senderName: senderName.trim() || "Səni sevən biri",
       message: message.trim(),
       theme: selectedTheme,
-      keyId: parseInt(keyId),
-      nonceData: nonceData
     };
 
     const encoded = encodeLetterParam(payload);
@@ -801,6 +801,8 @@ export function App() {
       senderName: senderName.trim() || "Səni sevən biri",
       message: message.trim(),
       theme: selectedTheme,
+      keyId: parseInt(keyId),
+      nonceData: nonceData
     };
 
     const encoded = encodeLetterParam(payload);
